@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design — Beginner to Pro</title>
+<meta name="description" content="A complete system design learning guide for Node.js developers. From client-server basics to Kafka, CQRS, and distributed tracing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #18181f;
+  --surface: #1e1e28;
+  --surface2: #252530;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #e8e6f0;
+  --text2: #9490aa;
+  --text3: #5e5a70;
+  --accent: #7c6af7;
+  --accent2: #a594ff;
+  --accent3: #c9beff;
+  --green: #4ade80;
+  --amber: #f59e0b;
+  --red: #f87171;
+  --teal: #2dd4bf;
+  --pink: #f472b6;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Outfit',sans-serif;
+  font-weight:400;
+  line-height:1.6;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* Noise texture */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:0.4;
+}
+
+/* Grid bg */
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:linear-gradient(rgba(124,106,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrap{position:relative;z-index:1}
+
+/* ── HERO ── */
+.hero{
+  max-width:1100px;
+  margin:0 auto;
+  padding:80px 24px 60px;
+  text-align:center;
+}
+.hero-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  color:var(--accent2);
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  padding:6px 16px;
+  border:1px solid rgba(124,106,247,0.3);
+  border-radius:100px;
+  margin-bottom:28px;
+  background:rgba(124,106,247,0.06);
+}
+.hero-eyebrow span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+.hero h1{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(42px,7vw,80px);
+  line-height:1.05;
+  color:#fff;
+  margin-bottom:20px;
+  letter-spacing:-0.02em;
+}
+.hero h1 em{
+  font-style:italic;
+  background:linear-gradient(135deg,var(--accent2),var(--teal));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub{
+  font-size:18px;
+  color:var(--text2);
+  max-width:560px;
+  margin:0 auto 40px;
+  font-weight:300;
+  line-height:1.7;
+}
+.hero-meta{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:24px;
+  flex-wrap:wrap;
+  font-size:13px;
+  color:var(--text3);
+}
+.hero-meta span{display:flex;align-items:center;gap:6px}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--text3)}
+
+/* ── LEVEL TABS ── */
+.tabs-wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 24px 28px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.tab-btn{
+  padding:8px 20px;
+  border-radius:100px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--text2);
+  font-family:'Outfit',sans-serif;
+  font-size:14px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.tab-btn:hover{border-color:rgba(124,106,247,0.4);color:var(--text)}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+
+/* ── GRID ── */
+.grid-wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 24px;
+}
+.concept-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;
+  margin-bottom:32px;
+}
+.card{
+  padding:22px 24px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  cursor:pointer;
+  transition:all 0.2s;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(124,106,247,0.06),transparent);
+  opacity:0;
+  transition:opacity 0.2s;
+}
+.card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.card:hover::before{opacity:1}
+.card.active{border-color:rgba(124,106,247,0.5);background:var(--surface2);box-shadow:0 0 0 1px rgba(124,106,247,0.2),0 8px 32px rgba(124,106,247,0.1)}
+.card-badge{
+  display:inline-block;
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding:3px 10px;
+  border-radius:100px;
+  margin-bottom:12px;
+}
+.badge-beginner{background:rgba(74,222,128,0.12);color:var(--green);border:1px solid rgba(74,222,128,0.2)}
+.badge-intermediate{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.2)}
+.badge-advanced{background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
+.badge-pro{background:rgba(124,106,247,0.15);color:var(--accent2);border:1px solid rgba(124,106,247,0.3)}
+
+.card-title{font-size:16px;font-weight:500;color:#fff;margin-bottom:6px;line-height:1.3}
+.card-desc{font-size:13px;color:var(--text2);line-height:1.5}
+.card-arrow{
+  position:absolute;
+  top:20px;right:20px;
+  width:28px;height:28px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;
+  color:var(--text3);
+  transition:all 0.2s;
+}
+.card:hover .card-arrow,.card.active .card-arrow{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+
+/* ── DETAIL PANEL ── */
+.detail-panel{
+  max-width:1100px;
+  margin:0 auto 60px;
+  padding:0 24px;
+  display:none;
+}
+.detail-panel.open{display:block;animation:fadeUp 0.3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.detail-inner{
+  border:1px solid var(--border2);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  overflow:hidden;
+}
+.detail-head{
+  padding:24px 28px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.detail-head h2{font-size:22px;font-weight:600;color:#fff}
+
+.dtabs{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+.dtab{
+  padding:14px 22px;
+  font-size:14px;
+  font-family:'Outfit',sans-serif;
+  color:var(--text2);
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+  white-space:nowrap;
+  transition:all 0.15s;
+}
+.dtab:hover{color:var(--text)}
+.dtab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+
+.detail-body{padding:28px}
+
+.section{margin-bottom:22px}
+.section-label{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:10px;
+}
+.section p{font-size:15px;color:var(--text2);line-height:1.75}
+.section p strong{color:var(--text);font-weight:500}
+.section p + p{margin-top:10px}
+
+pre,code{font-family:'DM Mono',monospace}
+.code-block{
+  background:#0d0d14;
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  padding:20px 22px;
+  font-size:13px;
+  line-height:1.7;
+  color:#c9c3e0;
+  overflow-x:auto;
+  white-space:pre;
+  margin:12px 0;
+  position:relative;
+}
+.code-block::before{
+  content:'JS';
+  position:absolute;
+  top:12px;right:14px;
+  font-size:10px;
+  color:var(--text3);
+  letter-spacing:0.1em;
+}
+
+.diagram-box{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  margin:14px 0;
+}
+.node-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.node-box{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500}
+.node-arrow{color:var(--text3);font-size:18px}
+.node-col{display:flex;flex-direction:column;gap:8px}
+
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:600px){.tradeoff-grid{grid-template-columns:1fr}}
+.t-card{padding:16px;border-radius:var(--radius)}
+.t-card.pro{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15)}
+.t-card.con{background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15)}
+.t-card h4{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px}
+.t-card.pro h4{color:var(--green)}
+.t-card.con h4{color:var(--red)}
+.t-card ul{list-style:none;font-size:13px;line-height:1.8}
+.t-card.pro ul{color:rgba(74,222,128,0.8)}
+.t-card.con ul{color:rgba(248,113,113,0.8)}
+
+.insight-box{
+  background:rgba(124,106,247,0.06);
+  border:1px solid rgba(124,106,247,0.2);
+  border-left:3px solid var(--accent);
+  border-radius:0 var(--radius) var(--radius) 0;
+  padding:14px 18px;
+  margin:14px 0;
+  font-size:14px;
+  color:var(--text2);
+  line-height:1.7;
+}
+.insight-box strong{color:var(--accent2)}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{
+  padding:4px 12px;
+  border-radius:100px;
+  font-size:12px;
+  font-family:'DM Mono',monospace;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  color:var(--text3);
+}
+
+/* ── FOOTER ── */
+footer{
+  max-width:1100px;
+  margin:0 auto;
+  padding:40px 24px;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+}
+footer p{font-size:13px;color:var(--text3)}
+.footer-badge{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  padding:6px 14px;
+  border:1px solid var(--border2);
+  border-radius:100px;
+  color:var(--text3);
+}
+
+/* ── PROGRESS ── */
+.progress-bar{
+  position:fixed;
+  top:0;left:0;
+  height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--teal));
+  z-index:100;
+  width:0%;
+  transition:width 0.1s;
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity 0.5s,transform 0.5s}
+.reveal.visible{opacity:1;transform:none}
+
+@media(max-width:768px){
+  .hero{padding:60px 20px 40px}
+  .hero h1{font-size:36px}
+  .detail-body{padding:20px}
+  .detail-head{padding:18px 20px}
+}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero reveal">
+  <div class="hero-eyebrow"><span></span> For Node.js developers · 4+ years exp</div>
+  <h1>System Design<br><em>Beginner to Pro</em></h1>
+  <p class="hero-sub">Master distributed systems — from client-server basics to Kafka, CQRS, and distributed tracing. Every concept with real Node.js code.</p>
+  <div class="hero-meta">
+    <span>13 concepts</span>
+    <div class="dot"></div>
+    <span>4 difficulty levels</span>
+    <div class="dot"></div>
+    <span>Node.js code examples</span>
+    <div class="dot"></div>
+    <span>Interview tips</span>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap reveal">
+  <button class="tab-btn active" onclick="filterLevel('all',this)">All levels</button>
+  <button class="tab-btn" onclick="filterLevel('beginner',this)">🌱 Beginner</button>
+  <button class="tab-btn" onclick="filterLevel('intermediate',this)">⚡ Intermediate</button>
+  <button class="tab-btn" onclick="filterLevel('advanced',this)">🔥 Advanced</button>
+  <button class="tab-btn" onclick="filterLevel('pro',this)">💎 Pro</button>
+</div>
+
+<!-- GRID -->
+<div class="grid-wrap">
+  <div class="concept-grid reveal" id="grid"></div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detail">
+  <div class="detail-inner">
+    <div class="detail-head">
+      <span class="card-badge" id="d-badge"></span>
+      <h2 id="d-title"></h2>
+    </div>
+    <div class="dtabs">
+      <button class="dtab active" onclick="switchTab('concept',this)">Concept</button>
+      <button class="dtab" onclick="switchTab('example',this)">Node.js Example</button>
+      <button class="dtab" onclick="switchTab('tradeoffs',this)">Tradeoffs</button>
+      <button class="dtab" onclick="switchTab('interview',this)">Interview Tips</button>
+    </div>
+    <div class="detail-body" id="d-body"></div>
+  </div>
+</div>
+
+<footer>
+  <p>System Design Learning Hub · Built for Node.js Engineers</p>
+  <span class="footer-badge">Free · Open · No signup</span>
+</footer>
+
+</div>
+
+<script>
+const C = [
+  {
+    id:'client-server',level:'beginner',
+    title:'Client-server model',desc:'Foundation of every distributed system',
+    concept:`<div class="section"><div class="section-label">What it is</div><p>A client sends requests, a server processes them and responds. Every web app you've built in Node.js follows this model — Express or Fastify listens on a port, accepts HTTP connections, and returns responses.</p></div>
+<div class="diagram-box"><div class="node-row">
+<div class="node-box" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd">Browser / Client</div>
+<div class="node-arrow">→ request →</div>
+<div class="node-box" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);color:#86efac">Node.js Server</div>
+<div class="node-arrow">→ response →</div>
+<div class="node-box" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd">Browser / Client</div>
+</div></div>
+<div class="section"><div class="section-label">Why it matters</div><p>Separation of concerns — clients handle presentation, servers handle data and logic. Enables horizontal scaling: run more servers behind a load balancer when traffic spikes.</p></div>
+<div class="tags"><span class="tag">HTTP</span><span class="tag">REST</span><span class="tag">TCP/IP</span><span class="tag">Stateless</span></div>`,
+    example:`<div class="code-block">// Minimal HTTP server in Node.js
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  if (req.url === '/api/users' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ users: ['Alice', 'Bob'] }));
+  } else {
+    res.writeHead(404);
+    res.end('Not found');
+  }
+});
+
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});</div>
+<div class="insight-box"><strong>Real-world context:</strong> When you deploy this to AWS EC2 and put an ALB in front of 3 instances, you've scaled the server tier horizontally. The client (React app) doesn't know or care which instance responds.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Simple to reason about</li><li>Easy to scale servers independently</li><li>Clear separation of concerns</li><li>Stateless → easier failover</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Server = single point of failure if not replicated</li><li>Network latency on every call</li><li>Clients need network access</li></ul></div></div>`,
+    interview:`<div class="section"><div class="section-label">Common question</div><p><strong>Q: What happens when a client sends a request to your Node.js API?</strong></p><p style="margin-top:10px">Walk through: DNS resolution → TCP handshake → HTTP request → Node.js event loop receives it → handler runs → response sent → connection reused (keep-alive) or closed.</p></div>
+<div class="insight-box"><strong>Tip:</strong> Mention the event loop and that Node.js handles each request asynchronously with a single thread — it's your competitive advantage in I/O-heavy workloads.</div>`
+  },
+  {
+    id:'scaling',level:'beginner',
+    title:'Horizontal vs vertical scaling',desc:'Growing your system under load',
+    concept:`<div class="section"><div class="section-label">Two ways to scale</div><p><strong>Vertical scaling (scale up):</strong> Make the machine bigger — more CPU, RAM. Simple but has a ceiling and creates a single point of failure.</p><p><strong>Horizontal scaling (scale out):</strong> Add more machines and distribute traffic. This is how Netflix, Uber and every large Node.js deployment works.</p></div>
+<div class="diagram-box"><div class="node-row"><div class="node-box" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fcd34d">Load Balancer</div><div class="node-col"><div class="node-box" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#86efac">Node.js #1</div><div class="node-box" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#86efac">Node.js #2</div><div class="node-box" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#86efac">Node.js #3</div></div></div></div>
+<div class="section"><div class="section-label">Key insight for Node.js devs</div><p>Node.js is single-threaded per process. To use all CPU cores, run one process per core using the cluster module or PM2. That's vertical scaling within one machine. Horizontal scaling = multiple machines.</p></div>`,
+    example:`<div class="code-block">// Using Node.js cluster to use all CPU cores
+const cluster = require('cluster');
+const os = require('os');
+const express = require('express');
+
+if (cluster.isPrimary) {
+  const numCPUs = os.cpus().length;
+  console.log(\`Forking \${numCPUs} workers...\`);
+  for (let i = 0; i < numCPUs; i++) cluster.fork();
+  cluster.on('exit', (worker) => {
+    console.log(\`Worker \${worker.process.pid} died, restarting...\`);
+    cluster.fork(); // Auto-restart dead workers
+  });
+} else {
+  const app = express();
+  app.get('/health', (req, res) => res.json({ pid: process.pid }));
+  app.listen(3000);
+  console.log(\`Worker \${process.pid} started\`);
+}</div>
+<div class="insight-box"><strong>PM2 alternative:</strong> <code>pm2 start app.js -i max</code> does the same automatically. In production on Kubernetes, prefer 1 CPU per Node.js pod rather than cluster module.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Horizontal pros</h4><ul><li>No upper limit on scale</li><li>Fault tolerant (no single point)</li><li>Incremental scaling</li><li>Multi-region possible</li></ul></div><div class="t-card con"><h4>Horizontal cons</h4><ul><li>State must be external (Redis)</li><li>Network complexity grows</li><li>Session stickiness issues</li></ul></div></div><div class="tradeoff-grid" style="margin-top:12px"><div class="t-card pro"><h4>Vertical pros</h4><ul><li>No app changes needed</li><li>Simple — one machine</li><li>Good for stateful workloads</li></ul></div><div class="t-card con"><h4>Vertical cons</h4><ul><li>Hard ceiling (biggest machine)</li><li>Downtime during upgrades</li><li>Single point of failure</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Key phrase:</strong> "Since Node.js is single-threaded per process and I/O-bound, horizontal scaling is natural — stateless services behind a load balancer, with Redis for shared session/cache state."</div>`
+  },
+  {
+    id:'load-balancing',level:'beginner',
+    title:'Load balancing',desc:'Distributing traffic across servers',
+    concept:`<div class="section"><div class="section-label">What it is</div><p>A load balancer distributes incoming requests so no single server gets overwhelmed. This is the mechanism that makes horizontal scaling actually work.</p></div>
+<div class="section"><div class="section-label">Algorithms</div><p><strong>Round-robin:</strong> Request 1→A, 2→B, 3→C, repeat. Default in Nginx/AWS ALB.</p><p><strong>Least connections:</strong> Send to the server handling fewest active connections. Better for WebSockets.</p><p><strong>IP hash:</strong> Same client IP always hits same server. Useful for session affinity but kills true horizontal scaling.</p></div>
+<div class="tags"><span class="tag">Nginx</span><span class="tag">AWS ALB</span><span class="tag">HAProxy</span><span class="tag">Layer 4</span><span class="tag">Layer 7</span></div>`,
+    example:`<div class="code-block"># Nginx load balancer config
+upstream node_cluster {
+  least_conn;  # Algorithm: least connections
+  server 10.0.1.10:3000;
+  server 10.0.1.11:3000;
+  server 10.0.1.12:3000;
+  keepalive 32;
+}
+
+server {
+  listen 80;
+  location / {
+    proxy_pass http://node_cluster;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+  }
+}</div>
+<div class="insight-box"><strong>AWS ALB:</strong> Health-checks your <code>/health</code> endpoint every 30s and automatically removes unhealthy instances from rotation. Zero downtime.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Eliminates single point of failure</li><li>Zero-downtime deploys</li><li>Central SSL termination</li><li>Rate limiting at the edge</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>LB itself can become a bottleneck</li><li>Extra network hop adds latency</li><li>Session state must leave the server</li><li>WebSocket sessions need sticky routing</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Common trap:</strong> Storing sessions in memory on a Node.js server — works on localhost, breaks the moment you add a second server. Use <code>express-session</code> + <code>connect-redis</code> to share sessions across all instances.</div>`
+  },
+  {
+    id:'caching',level:'intermediate',
+    title:'Caching strategies',desc:'Speed up reads by storing computed results',
+    concept:`<div class="section"><div class="section-label">Why caching exists</div><p>Databases and computation are slow. Caching stores the result of expensive operations close to the consumer so repeat requests are fast — O(1) memory lookup instead of a DB query.</p></div>
+<div class="section"><div class="section-label">Cache hierarchy</div><p><strong>1. In-process cache:</strong> Node.js Map/LRU in server memory. Sub-millisecond. Lost on restart. Good for config, feature flags.</p><p><strong>2. Distributed cache (Redis):</strong> Shared across all Node.js instances. 1–5ms. Most common pattern.</p><p><strong>3. CDN cache:</strong> Cloudflare/CloudFront at the edge. ~10ms. For static assets and public API responses.</p></div>
+<div class="section"><div class="section-label">Invalidation strategies</div><p><strong>TTL:</strong> Expire after N seconds. Simple. Data may be stale up to TTL.</p><p><strong>Write-through:</strong> Update cache when you write to DB. Always consistent. Double writes.</p><p><strong>Cache-aside (lazy loading):</strong> Check cache first, miss→hit DB→populate cache. Most flexible.</p></div>`,
+    example:`<div class="code-block">// Cache-aside pattern with Redis in Node.js
+const redis = require('ioredis');
+const client = new redis(process.env.REDIS_URL);
+
+async function getUserById(userId) {
+  const cacheKey = \`user:\${userId}\`;
+  
+  // 1. Check cache first
+  const cached = await client.get(cacheKey);
+  if (cached) return JSON.parse(cached); // Cache hit!
+  
+  // 2. Cache miss — query DB
+  const user = await db.users.findById(userId);
+  if (!user) return null;
+  
+  // 3. Populate cache with 5 min TTL
+  await client.setex(cacheKey, 300, JSON.stringify(user));
+  return user;
+}
+
+// Invalidate on update
+async function updateUser(userId, data) {
+  await db.users.update(userId, data);
+  await client.del(\`user:\${userId}\`); // Remove stale cache
+}</div>
+<div class="insight-box"><strong>Thundering herd:</strong> When cache expires and 1000 requests simultaneously hit the DB. Fix: use Redis SET NX as a distributed lock — only one request rebuilds the cache, others wait.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Dramatic latency reduction</li><li>Reduces DB load</li><li>Handles traffic spikes</li><li>Cheaper at scale</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Stale data (cache coherence)</li><li>Cache invalidation is hard</li><li>Memory cost for large datasets</li><li>Cold start problem</li></ul></div></div>`,
+    interview:`<div class="section"><div class="section-label">Interview framework</div><p>When asked to design any read-heavy system, always propose caching early. Structure: "What to cache → Where → How to invalidate → Thundering herd protection".</p></div>`
+  },
+  {
+    id:'databases',level:'intermediate',
+    title:'SQL vs NoSQL',desc:'Choosing the right data store',
+    concept:`<div class="section"><div class="section-label">SQL (Relational)</div><p>Data in tables with fixed schemas, foreign keys and ACID transactions. PostgreSQL is the default choice. Use when: data is structured, you need joins, or financial consistency is required.</p></div>
+<div class="section"><div class="section-label">NoSQL types</div><p><strong>Document (MongoDB, DynamoDB):</strong> JSON documents. Schema-flexible. Great for user profiles, product catalogs.</p><p><strong>Key-Value (Redis):</strong> Hash map at scale. Fastest reads. For caching, sessions, leaderboards.</p><p><strong>Wide-column (Cassandra):</strong> Write-optimized. Billions of rows. For time-series, IoT logs.</p><p><strong>Graph (Neo4j):</strong> Nodes + edges. Social networks, recommendations, fraud detection.</p></div>`,
+    example:`<div class="code-block">// PostgreSQL with Node.js — connection pool + ACID transaction
+const { Pool } = require('pg');
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  max: 20,       // Max 20 connections in pool
+  idleTimeoutMillis: 30000,
+});
+
+// ACID transaction — both updates happen or neither does
+async function transferMoney(fromId, toId, amount) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      'UPDATE accounts SET balance = balance - $1 WHERE id = $2',
+      [amount, fromId]
+    );
+    await client.query(
+      'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
+      [amount, toId]
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}</div>
+<div class="insight-box"><strong>Node.js tip:</strong> Always use a connection pool. Never create a new DB connection per request — that adds ~50-100ms of TCP handshake overhead per call.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>SQL strengths</h4><ul><li>ACID transactions</li><li>Complex joins</li><li>Schema validation</li><li>Mature tooling</li></ul></div><div class="t-card con"><h4>SQL weaknesses</h4><ul><li>Harder to scale writes (sharding)</li><li>Schema migrations on large tables</li></ul></div></div><div class="tradeoff-grid" style="margin-top:12px"><div class="t-card pro"><h4>NoSQL strengths</h4><ul><li>Horizontal scaling built-in</li><li>Schema flexibility</li><li>Optimized access patterns</li></ul></div><div class="t-card con"><h4>NoSQL weaknesses</h4><ul><li>Limited or no joins</li><li>Eventual consistency by default</li><li>Data duplication common</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Polyglot persistence:</strong> Most real systems use multiple databases — PostgreSQL for core business data, Redis for cache/sessions, Elasticsearch for full-text search, S3 for files. That's completely normal and expected in senior-level designs.</div>`
+  },
+  {
+    id:'message-queues',level:'intermediate',
+    title:'Message queues',desc:'Async processing & service decoupling',
+    concept:`<div class="section"><div class="section-label">The problem they solve</div><p>When user clicks "send email" on your API, you don't want the HTTP response to wait 2 seconds for the SMTP call. Queues let you say "I'll handle that later" and respond in milliseconds.</p></div>
+<div class="diagram-box"><div class="node-row"><div class="node-box" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd">API Server</div><div class="node-arrow">→ publish →</div><div class="node-box" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fcd34d">Queue (SQS/RabbitMQ)</div><div class="node-arrow">→ consume →</div><div class="node-box" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#86efac">Worker Process</div></div></div>
+<div class="section"><div class="section-label">Key concepts</div><p><strong>Producer:</strong> Publishes messages (your API).</p><p><strong>Consumer:</strong> Separate Node.js process that reads and processes messages.</p><p><strong>Dead Letter Queue (DLQ):</strong> Where failed messages go after N retries.</p><p><strong>Visibility timeout:</strong> How long a message is hidden from other consumers while being processed.</p></div>`,
+    example:`<div class="code-block">// BullMQ (Redis-backed queue) — popular in Node.js
+const { Queue, Worker } = require('bullmq');
+const connection = { host: 'localhost', port: 6379 };
+
+// Producer (in your Express API handler)
+const emailQueue = new Queue('emails', { connection });
+
+app.post('/api/register', async (req, res) => {
+  const user = await createUser(req.body);
+  
+  // Add job to queue — returns immediately
+  await emailQueue.add('welcome-email', {
+    to: user.email, name: user.name
+  });
+  
+  res.json({ user }); // Responds in ~10ms
+});
+
+// Consumer (separate process: worker.js)
+const worker = new Worker('emails', async (job) => {
+  await sendEmail({
+    to: job.data.to,
+    subject: 'Welcome!',
+    html: \`<h1>Hi \${job.data.name}!</h1>\`
+  });
+}, { connection, concurrency: 5 });</div>
+<div class="insight-box"><strong>When to use:</strong> Email/SMS sending, image resizing, report generation, webhook delivery, payment side-effects. Any slow, failure-prone operation where the user doesn't need to wait.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Decouples producer from consumer</li><li>Built-in retry logic</li><li>Absorbs traffic spikes</li><li>Independent worker scaling</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Eventual processing (not sync)</li><li>Harder to debug failures</li><li>Message ordering not guaranteed</li><li>Extra infrastructure</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Design tip:</strong> Anytime an interviewer describes a slow step (sending emails, processing images, calling third-party APIs), propose a queue. Show you understand: API returns 202 Accepted, worker processes in background, polling or webhook for status.</div>`
+  },
+  {
+    id:'api-design',level:'intermediate',
+    title:'API design (REST + GraphQL)',desc:'Contracts between clients and servers',
+    concept:`<div class="section"><div class="section-label">REST principles</div><p>Resources identified by URLs, operations by HTTP methods (GET, POST, PUT/PATCH, DELETE). Stateless — every request contains all context needed.</p></div>
+<div class="section"><div class="section-label">REST vs GraphQL</div><p><strong>REST:</strong> One endpoint per resource. Simple to cache (GET is cacheable by URL). Widely understood. Can over/under-fetch.</p><p><strong>GraphQL:</strong> Single endpoint. Client specifies exactly what data it needs. Solves over/under-fetching. Harder to cache. Better for complex nested data.</p></div>
+<div class="tags"><span class="tag">REST</span><span class="tag">GraphQL</span><span class="tag">OpenAPI</span><span class="tag">Versioning</span><span class="tag">Rate limiting</span></div>`,
+    example:`<div class="code-block">// REST API design patterns in Express
+// Good URL design: nouns not verbs, HTTP method = action
+// GET    /api/users          — list users
+// POST   /api/users          — create user
+// GET    /api/users/:id      — get user
+// PATCH  /api/users/:id      — partial update
+// DELETE /api/users/:id      — delete user
+
+router.get('/users/:id', async (req, res) => {
+  const user = await userService.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ data: user });
+});
+
+// API versioning
+app.use('/api/v1', v1Router);
+app.use('/api/v2', v2Router); // v1 still works for old clients
+
+// Rate limiting
+const rateLimit = require('express-rate-limit');
+app.use('/api/', rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,            // 100 requests/minute per IP
+}));</div>
+<div class="insight-box"><strong>Idempotency:</strong> Client sends <code>Idempotency-Key: uuid-v4</code> header. Server stores key + result in Redis for 24h. If client retries (network timeout), server returns cached result instead of processing twice. Critical for payment APIs.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>REST strengths</h4><ul><li>Simple, widely understood</li><li>HTTP caching works naturally</li><li>Easy to debug with curl</li><li>Stateless — easy to scale</li></ul></div><div class="t-card con"><h4>REST weaknesses</h4><ul><li>Over/under-fetching</li><li>Multiple round-trips for related data</li><li>Versioning gets messy</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Design a good API:</strong> Always include authentication (JWT Bearer), rate limiting, pagination for collections, consistent error format, versioning strategy, and idempotency keys for POST operations that shouldn't duplicate (payments, order creation).</div>`
+  },
+  {
+    id:'cdn',level:'intermediate',
+    title:'CDN & edge computing',desc:'Serving content close to users globally',
+    concept:`<div class="section"><div class="section-label">What a CDN does</div><p>A CDN has servers (Points of Presence) distributed globally. A user in Mumbai gets assets from a Mumbai PoP — not from your origin in us-east-1. Latency: 200ms → 10ms.</p></div>
+<div class="section"><div class="section-label">What to put on CDN</div><p><strong>Static assets:</strong> JS bundles, CSS, images, fonts. Always. Use content-hashed filenames + max-age=31536000.</p><p><strong>API responses:</strong> GET endpoints with infrequently-changing data.</p><p><strong>Edge functions:</strong> Cloudflare Workers, Lambda@Edge — run JS at the CDN edge for auth, A/B testing, request rewriting.</p></div>`,
+    example:`<div class="code-block">// Set cache headers in Express
+app.get('/api/products', async (req, res) => {
+  const products = await getProducts();
+  
+  // Cache at CDN for 5 min, browser for 1 min
+  res.set({
+    'Cache-Control': 'public, s-maxage=300, max-age=60',
+    'Vary': 'Accept-Encoding',
+    'ETag': generateETag(products),
+  });
+  
+  res.json(products);
+});
+
+// Serve static files with long cache
+app.use('/static', express.static('dist', {
+  maxAge: '1y',
+  immutable: true,
+}));
+
+// Cloudflare Worker (runs at edge, not your server)
+export default {
+  async fetch(request, env) {
+    const cache = caches.default;
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    
+    const response = await fetch(request);
+    if (response.ok && request.method === 'GET') {
+      await cache.put(request, response.clone());
+    }
+    return response;
+  }
+}</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Massive global latency reduction</li><li>Reduces origin server load</li><li>DDoS protection at edge</li><li>SSL termination at edge</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Cache invalidation is tricky</li><li>Cost at high traffic volume</li><li>Dynamic content harder to cache</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Cache invalidation on deploy:</strong> For static assets, use content hashing (Webpack/Vite). For API responses, use Cloudflare Cache API with tag-based purge — "Purge /api/products on every product update".</div>`
+  },
+  {
+    id:'microservices',level:'advanced',
+    title:'Microservices architecture',desc:'Decomposing monoliths into independent services',
+    concept:`<div class="section"><div class="section-label">What it is</div><p>Instead of one large Node.js app, split functionality into small, independently deployable services. Each service owns its data, has its own database, and communicates via APIs or message queues.</p></div>
+<div class="diagram-box"><div style="display:flex;flex-direction:column;align-items:center;gap:12px"><div class="node-box" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fcd34d;width:100%;text-align:center">API Gateway</div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><div class="node-box" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd">User Service</div><div class="node-box" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#86efac">Order Service</div><div class="node-box" style="background:rgba(124,106,247,0.15);border:1px solid rgba(124,106,247,0.3);color:#c4b5fd">Payment Service</div><div class="node-box" style="background:rgba(244,114,182,0.12);border:1px solid rgba(244,114,182,0.25);color:#f9a8d4">Notification Svc</div></div></div></div>
+<div class="section"><div class="section-label">When to decompose</div><p>Don't start with microservices. Start with a monolith. Split when: teams are stepping on each other, a specific service needs independent scaling, or deployment velocity is suffering.</p></div>`,
+    example:`<div class="code-block">// API Gateway with Node.js (http-proxy-middleware)
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+const app = express();
+
+app.use('/api/users', createProxyMiddleware({
+  target: process.env.USER_SERVICE_URL,
+  changeOrigin: true,
+}));
+
+app.use('/api/orders', createProxyMiddleware({
+  target: process.env.ORDER_SERVICE_URL,
+  changeOrigin: true,
+}));
+
+// Service-to-service call within a microservice
+async function getUserOrders(userId) {
+  const res = await fetch(
+    \`\${process.env.ORDER_SERVICE_URL}/internal/orders?userId=\${userId}\`,
+    { headers: { 'x-internal-key': process.env.INTERNAL_API_KEY } }
+  );
+  return res.json();
+}</div>
+<div class="insight-box"><strong>Service discovery:</strong> In Kubernetes, services find each other via DNS. <code>http://order-service:3001</code> resolves automatically. No hardcoded IPs.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Independent deployment & scaling</li><li>Tech stack freedom per service</li><li>Team autonomy</li><li>Fault isolation</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Distributed system complexity</li><li>Network calls between services</li><li>Distributed transactions are hard</li><li>Observability requires investment</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>SAGA pattern:</strong> Transactions across services. Each service does its local transaction and publishes an event. If a step fails, compensating transactions undo previous steps. E.g., order created → payment charged → if payment fails → cancel order.</div>`
+  },
+  {
+    id:'cap',level:'advanced',
+    title:'CAP theorem',desc:'Consistency, availability & partition tolerance',
+    concept:`<div class="section"><div class="section-label">The theorem</div><p>In a distributed system, during a network partition, you can only guarantee two of three:</p><p><strong>C — Consistency:</strong> Every read returns the most recent write.</p><p><strong>A — Availability:</strong> Every request gets a non-error response (may not be latest data).</p><p><strong>P — Partition tolerance:</strong> System continues operating even if network packets are dropped.</p></div>
+<div class="section"><div class="section-label">The real choice</div><p>Since network partitions always happen in real systems, you must choose P. So the real tradeoff is CP or AP — return an error during a partition (consistent) or return potentially stale data (available)?</p></div>
+<div class="tags"><span class="tag">CP: HBase, ZooKeeper</span><span class="tag">AP: Cassandra, CouchDB</span></div>`,
+    example:`<div class="code-block">// CP system: reject reads if can't guarantee freshness
+class CPCache {
+  async read(key) {
+    const responses = await Promise.allSettled(
+      this.nodes.map(node => node.get(key))
+    );
+    const successful = responses
+      .filter(r => r.status === 'fulfilled')
+      .map(r => r.value);
+    
+    if (successful.length < this.quorum) {
+      throw new Error('Cannot guarantee consistency'); // CP: fail loudly
+    }
+    return successful.sort((a, b) => b.version - a.version)[0].value;
+  }
+}
+
+// AP system: return stale data rather than fail
+class APCache {
+  async read(key) {
+    try {
+      return await primaryNode.get(key);
+    } catch {
+      return await replicaNode.getStale(key); // AP: available always
+    }
+  }
+}</div>
+<div class="insight-box"><strong>DynamoDB example:</strong> By default, reads are eventually consistent (AP). You can request strongly consistent reads (CP) at 2x the read cost. Your design choice is explicit in every SDK call.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Choose CP when</h4><ul><li>Banking & payments</li><li>Inventory management</li><li>Seat/ticket reservations</li><li>Stale data causes real harm</li></ul></div><div class="t-card con"><h4>Choose AP when</h4><ul><li>Social media feeds</li><li>Product catalogs</li><li>Analytics dashboards</li><li>Uptime matters more than freshness</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Key phrase:</strong> "CAP tells us we must choose between consistency and availability during network partitions. For this system I'd choose AP because users would rather see slightly stale data than get an error. We'll handle eventual consistency by [explain compensation logic]."</div>`
+  },
+  {
+    id:'rate-limiting',level:'advanced',
+    title:'Rate limiting & throttling',desc:'Protecting systems from abuse and overload',
+    concept:`<div class="section"><div class="section-label">Why it's critical</div><p>Without rate limiting, a single misbehaving client can bring down your entire API. DDoS attacks, runaway bots, billing abuse — rate limiting is your first line of defense.</p></div>
+<div class="section"><div class="section-label">Algorithms</div><p><strong>Token bucket:</strong> Each user has N tokens that refill at rate R. Each request costs 1 token. Allows bursts up to bucket size. Most common.</p><p><strong>Leaky bucket:</strong> Requests queue up, drain at constant rate. Smooth output, delays spikes instead of rejecting.</p><p><strong>Sliding window:</strong> Count requests in a rolling time window. More accurate than fixed windows.</p><p><strong>Fixed window:</strong> Reset counter every minute. Simple but vulnerable to boundary attacks.</p></div>`,
+    example:`<div class="code-block">// Redis-based sliding window rate limiter
+async function isRateLimited(userId, limit = 100, windowSecs = 60) {
+  const now = Date.now();
+  const windowStart = now - windowSecs * 1000;
+  const key = \`ratelimit:\${userId}\`;
+  
+  // Lua script runs atomically on Redis
+  const luaScript = \`
+    local key = KEYS[1]
+    local now = tonumber(ARGV[1])
+    local window_start = tonumber(ARGV[2])
+    local limit = tonumber(ARGV[3])
+    local window_secs = tonumber(ARGV[4])
+    
+    redis.call('ZREMRANGEBYSCORE', key, '-inf', window_start)
+    local count = redis.call('ZCARD', key)
+    
+    if count < limit then
+      redis.call('ZADD', key, now, now)
+      redis.call('EXPIRE', key, window_secs)
+      return 0  -- Not limited
+    end
+    return 1  -- Rate limited
+  \`;
+  
+  const result = await redis.eval(
+    luaScript, 1, key, now, windowStart, limit, windowSecs
+  );
+  return result === 1;
+}
+
+app.use(async (req, res, next) => {
+  const userId = req.user?.id || req.ip;
+  if (await isRateLimited(userId)) {
+    return res.status(429).json({
+      error: 'Too many requests', retryAfter: 60
+    });
+  }
+  next();
+});</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Benefits</h4><ul><li>Protects against DDoS/abuse</li><li>Fair resource allocation</li><li>Predictable capacity planning</li><li>Tiered SLA enforcement</li></ul></div><div class="t-card con"><h4>Challenges</h4><ul><li>Legitimate users may hit limits</li><li>Distributed rate limiting needs Redis</li><li>IP spoofing can bypass limits</li><li>Shared IPs (offices, NAT) affected</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Tiered limits:</strong> Free: 100 req/min. Pro: 1000 req/min. Enterprise: custom. Return <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code> headers so clients can self-throttle before getting a 429.</div>`
+  },
+  {
+    id:'consistent-hashing',level:'pro',
+    title:'Consistent hashing',desc:'Distributing load with minimal remapping',
+    concept:`<div class="section"><div class="section-label">The problem</div><p>You have 3 cache servers. You distribute keys as <code>hash(key) % 3</code>. Add a 4th server. Now <code>hash(key) % 4</code> maps almost every key to a different server — cache miss for everything. Consistent hashing solves this.</p></div>
+<div class="section"><div class="section-label">How it works</div><p>Imagine a ring with positions 0 to 2³²-1. Hash each server to a position. For each key, hash it to a position and walk clockwise until you hit a server. When you add/remove a server, only the keys in that server's arc need to move.</p></div>
+<div class="section"><div class="section-label">Virtual nodes</div><p>Each physical server gets 150 virtual positions on the ring. Adding a server takes over 150 small arcs distributed across the whole ring — ensures even distribution.</p></div>`,
+    example:`<div class="code-block">// Consistent hashing implementation in Node.js
+const crypto = require('crypto');
+
+class ConsistentHash {
+  constructor(servers = [], replicas = 150) {
+    this.replicas = replicas;
+    this.ring = new Map();
+    this.sortedKeys = [];
+    servers.forEach(s => this.addServer(s));
+  }
+  
+  hash(key) {
+    return parseInt(
+      crypto.createHash('md5').update(key).digest('hex').slice(0, 8), 16
+    );
+  }
+  
+  addServer(server) {
+    for (let i = 0; i < this.replicas; i++) {
+      const vKey = this.hash(\`\${server}:\${i}\`);
+      this.ring.set(vKey, server);
+      this.sortedKeys.push(vKey);
+    }
+    this.sortedKeys.sort((a, b) => a - b);
+  }
+  
+  getServer(key) {
+    if (!this.sortedKeys.length) return null;
+    const hash = this.hash(key);
+    const idx = this.sortedKeys.findIndex(k => k >= hash);
+    const ringKey = idx === -1 ? this.sortedKeys[0] : this.sortedKeys[idx];
+    return this.ring.get(ringKey);
+  }
+}
+
+const ch = new ConsistentHash(['cache-1', 'cache-2', 'cache-3']);
+console.log(ch.getServer('user:123'));  // → 'cache-2'
+ch.addServer('cache-4');
+console.log(ch.getServer('user:123'));  // Usually still → 'cache-2'!</div>
+<div class="insight-box"><strong>Impact:</strong> Standard modulo: adding 1 server to 10 remaps ~91% of keys. Consistent hashing: remaps ~9%. Used in DynamoDB, Cassandra, Memcached clients, distributed job schedulers.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Minimal key remapping on scale changes</li><li>Smooth cache cluster expansion</li><li>Even distribution with virtual nodes</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Implementation complexity</li><li>Slightly uneven distribution without virtual nodes</li><li>Data migration still needed (just minimal)</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>Senior signal:</strong> Mentioning consistent hashing when designing any sharded system immediately demonstrates senior-level thinking. It shows you've thought about what happens when the cluster changes size — a real production concern.</div>`
+  },
+  {
+    id:'event-driven',level:'pro',
+    title:'Event-driven architecture',desc:'Kafka, CQRS & event sourcing',
+    concept:`<div class="section"><div class="section-label">Core idea</div><p>Instead of services calling each other directly, they publish events to an immutable log (Kafka). Other services subscribe and react. The event log becomes the source of truth — you can replay it to rebuild any derived state.</p></div>
+<div class="section"><div class="section-label">CQRS</div><p>Separate your write model (commands) from your read model (queries). Writes go to PostgreSQL, reads come from a denormalized view in Elasticsearch or Redis. Eventual consistency between them via events.</p></div>
+<div class="section"><div class="section-label">Event sourcing</div><p>Store every state change as an immutable event. Current state = replaying all events. You gain: full audit trail, time-travel debugging, ability to build new projections retroactively.</p></div>
+<div class="tags"><span class="tag">Kafka</span><span class="tag">CQRS</span><span class="tag">Event sourcing</span><span class="tag">Outbox pattern</span><span class="tag">SAGA</span></div>`,
+    example:`<div class="code-block">// Event sourcing + CQRS with Kafka in Node.js
+const { Kafka } = require('kafkajs');
+const kafka = new Kafka({ brokers: ['kafka:9092'] });
+const producer = kafka.producer();
+
+// Command side: write events
+async function processOrder(command) {
+  const event = {
+    type: 'ORDER_PLACED',
+    orderId: uuid(),
+    userId: command.userId,
+    items: command.items,
+    total: command.total,
+    timestamp: new Date().toISOString(),
+  };
+  
+  await producer.send({
+    topic: 'order-events',
+    messages: [{ 
+      key: event.orderId, // Same order → same partition → ordering
+      value: JSON.stringify(event) 
+    }],
+  });
+  return event.orderId;
+}
+
+// Query side: projection builder
+const orderProjection = new Map();
+const consumer = kafka.consumer({ groupId: 'order-projection' });
+await consumer.subscribe({ topic: 'order-events' });
+await consumer.run({
+  eachMessage: async ({ message }) => {
+    const event = JSON.parse(message.value);
+    if (event.type === 'ORDER_PLACED') {
+      orderProjection.set(event.orderId, { ...event, status: 'pending' });
+    } else if (event.type === 'ORDER_SHIPPED') {
+      const order = orderProjection.get(event.orderId);
+      if (order) order.status = 'shipped';
+    }
+  },
+});</div>
+<div class="insight-box"><strong>Outbox pattern:</strong> Write events to an "outbox" DB table in the same transaction as your state change, then a separate process publishes them to Kafka. Eliminates the dual-write race condition.</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>Pros</h4><ul><li>Complete audit trail</li><li>Replay events to rebuild state</li><li>Read/write scale independently</li><li>Loose coupling between services</li></ul></div><div class="t-card con"><h4>Cons</h4><ul><li>Steep learning curve</li><li>Eventual consistency everywhere</li><li>Schema evolution is hard</li><li>Complex distributed debugging</li></ul></div></div>`,
+    interview:`<div class="insight-box"><strong>When to use:</strong> Complex domains with audit requirements, multiple derived views, or high read/write asymmetry. In an interview: "If the system needs a full audit trail and has 10x reads vs writes, I'd consider CQRS with event sourcing — the complexity is justified here."</div>`
+  },
+  {
+    id:'observability',level:'pro',
+    title:'Observability & distributed tracing',desc:'Understanding your system in production',
+    concept:`<div class="section"><div class="section-label">The three pillars</div><p><strong>Metrics:</strong> Aggregated numbers over time. CPU %, request rate, error rate, p99 latency. Tells you something is wrong. (Prometheus, DataDog)</p><p><strong>Logs:</strong> Discrete events from each service. Tells you what happened at a specific moment. (ELK stack, CloudWatch)</p><p><strong>Traces:</strong> A request's journey across multiple services. Shows exactly which service is slow and why. (Jaeger, AWS X-Ray, Datadog APM)</p></div>
+<div class="section"><div class="section-label">Four golden signals (Google SRE)</div><p><strong>Latency</strong> (how long requests take) · <strong>Traffic</strong> (requests per second) · <strong>Errors</strong> (error rate) · <strong>Saturation</strong> (how full is the system — CPU, memory, queue depth)</p></div>`,
+    example:`<div class="code-block">// OpenTelemetry setup in Node.js
+// tracing.js — load BEFORE everything else with --require
+const { NodeSDK } = require('@opentelemetry/sdk-node');
+const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
+const { ExpressInstrumentation } = require('@opentelemetry/instrumentation-express');
+const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg');
+
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter({
+    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  }),
+  instrumentations: [
+    new HttpInstrumentation(),
+    new ExpressInstrumentation(),
+    new PgInstrumentation(), // Auto-traces every DB query!
+  ],
+});
+sdk.start();
+
+// Manual span for business logic
+const { trace } = require('@opentelemetry/api');
+const tracer = trace.getTracer('my-service');
+
+async function processPayment(data) {
+  const span = tracer.startSpan('processPayment');
+  span.setAttribute('payment.amount', data.amount);
+  try {
+    const result = await chargeCard(data);
+    span.setAttribute('payment.status', 'success');
+    return result;
+  } catch (err) {
+    span.recordException(err);
+    span.setStatus({ code: 2 }); // ERROR
+    throw err;
+  } finally {
+    span.end();
+  }
+}</div>`,
+    tradeoffs:`<div class="tradeoff-grid"><div class="t-card pro"><h4>With observability</h4><ul><li>Find root cause in minutes</li><li>Understand perf bottlenecks</li><li>Proactive alerting</li><li>Confident production deploys</li></ul></div><div class="t-card con"><h4>Without observability</h4><ul><li>Hours debugging in prod</li><li>No capacity planning data</li><li>Users tell you it's broken</li><li>"Works on my machine"</li></ul></div></div>`,
+    interview:`<div class="section"><div class="section-label">SLO / SLA design</div><p><strong>SLA:</strong> External promise — "99.9% uptime" = 8.7 hours downtime/year.</p><p><strong>SLO:</strong> Internal target, stricter than SLA — "p99 latency &lt; 200ms".</p><p><strong>SLI:</strong> The actual measurement — "p99 latency measured over 5-minute windows".</p></div>
+<div class="insight-box"><strong>Error budget:</strong> 99.9% SLA = 43.8 min/month of allowed downtime. If you've used 40 minutes, freeze deployments. This is how Google SRE manages reliability vs velocity.</div>`
+  }
+];
+
+let activeLevel = 'all';
+let activeConcept = null;
+let activeTab = 'concept';
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const filtered = activeLevel === 'all' ? C : C.filter(c => c.level === activeLevel);
+  grid.innerHTML = filtered.map(c => `
+    <div class="card ${activeConcept?.id === c.id ? 'active' : ''}" onclick="selectConcept('${c.id}')">
+      <div class="card-arrow">${activeConcept?.id === c.id ? '↓' : '→'}</div>
+      <span class="card-badge badge-${c.level}">${c.level}</span>
+      <div class="card-title">${c.title}</div>
+      <div class="card-desc">${c.desc}</div>
+    </div>
+  `).join('');
+}
+
+function filterLevel(level, btn) {
+  activeLevel = level;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function selectConcept(id) {
+  const concept = C.find(c => c.id === id);
+  if (activeConcept?.id === id) {
+    activeConcept = null;
+    document.getElementById('detail').classList.remove('open');
+    renderGrid();
+    return;
+  }
+  activeConcept = concept;
+  activeTab = 'concept';
+  renderGrid();
+  renderDetail();
+  setTimeout(() => document.getElementById('detail').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function renderDetail() {
+  const panel = document.getElementById('detail');
+  const badge = document.getElementById('d-badge');
+  const title = document.getElementById('d-title');
+  badge.className = `card-badge badge-${activeConcept.level}`;
+  badge.textContent = activeConcept.level;
+  title.textContent = activeConcept.title;
+  updateDTabs();
+  renderDBody();
+  panel.classList.add('open');
+}
+
+function updateDTabs() {
+  const tabs = ['concept','example','tradeoffs','interview'];
+  document.querySelectorAll('.dtab').forEach((t,i) => {
+    t.classList.toggle('active', tabs[i] === activeTab);
+  });
+}
+
+function switchTab(tab, btn) {
+  activeTab = tab;
+  updateDTabs();
+  renderDBody();
+}
+
+function renderDBody() {
+  const body = document.getElementById('d-body');
+  const map = { concept: activeConcept.concept, example: activeConcept.example, tradeoffs: activeConcept.tradeoffs, interview: activeConcept.interview };
+  body.innerHTML = map[activeTab] || '<p style="color:var(--text2)">Content coming soon.</p>';
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+});
+
+renderGrid();
+</script>
+</body>
+</html>
